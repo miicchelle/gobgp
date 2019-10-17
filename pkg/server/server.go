@@ -4143,3 +4143,31 @@ func (s *BgpServer) watch(opts ...watchOption) (w *watcher) {
 	}, false)
 	return w
 }
+
+// ReceivedBGPMessageInfo is the type passed to the MonitorReceivedBGPMessages
+// callback function.
+type ReceivedBGPMessageInfo = watchEventMessage
+
+// MonitorReceivedBGPMessages invokes the callback function for every BGP
+// message received by the server.
+func (s *BgpServer) MonitorReceivedBGPMessages(ctx context.Context, fn func(m *ReceivedBGPMessageInfo)) {
+	w := s.watch(watchMessage(false))
+	go func() {
+		for {
+			select {
+			case ev := <-w.Event():
+				switch msg := ev.(type) {
+				case *watchEventMessage:
+					fn(msg)
+				default:
+					log.WithFields(log.Fields{
+						"Topic":     "Watcher",
+						"EventType": fmt.Sprintf("%T", ev),
+					}).Error("internal error: unexpected event type")
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+}
