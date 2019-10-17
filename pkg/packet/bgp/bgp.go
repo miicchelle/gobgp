@@ -1192,6 +1192,9 @@ func (r *IPAddrPrefixDefault) serializePrefix(bitLen uint8) ([]byte, error) {
 }
 
 func (r *IPAddrPrefixDefault) String() string {
+	if pathID := r.PathIdentifier(); pathID != 0 {
+		return fmt.Sprintf("%d!%s/%d", pathID, r.Prefix.String(), r.Length)
+	}
 	return fmt.Sprintf("%s/%d", r.Prefix.String(), r.Length)
 }
 
